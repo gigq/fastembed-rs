@@ -127,6 +127,8 @@ pub enum EmbeddingModel {
     BGESmallZH,
     /// Multilingual model, e5-large. Recommend using this model for non-English languages.
     MLE5Large,
+    /// Unified embedding model to support diverse retrieval augmentation needs for LLMs
+    LLMEmbedder,
 }
 
 impl Display for EmbeddingModel {
@@ -206,8 +208,17 @@ impl FlagEmbedding {
 
         let threads = available_parallelism()?.get() as i16;
 
-        let model_path =
-            FlagEmbedding::retrieve_model(model_name.clone(), &cache_dir, show_download_message)?;
+        let model_path: PathBuf;
+
+        if model_name == EmbeddingModel::LLMEmbedder {
+            model_path = Path::new(".").join("llm-embedder");
+        } else {
+            model_path = FlagEmbedding::retrieve_model(
+                model_name.clone(),
+                &cache_dir,
+                show_download_message,
+            )?;
+        }
 
         ort::init()
             .with_name("Fastembed")
